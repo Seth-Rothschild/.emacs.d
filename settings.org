@@ -1,0 +1,204 @@
+#+TITLE: Seth Rothschild's Emacs Configuration
+#+OPTIONS: toc:2 h:4
+<<babel-init>>
+
+
+This is my fourth version of an emacs configuration. While I
+had previously been basically living inside of emacs, I've
+used it less in the last 3 years. The emphasis in this
+configuration is portability -- I'd like to just be able to
+download this file and the init and have emacs.
+
+* General
+** Loading use-package 
+Previously, I was expecting a whole bunch of binaries to
+have already been installed and then call them from
+emacs. It turns out this isn't a great plan for moving the
+configuation to a new machine so now we expect less.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (require 'package)
+  (add-to-list 'package-archives
+              '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+
+  (package-initialize)
+  (unless package-archive-contents
+      (package-refresh-contents))
+
+  (unless (package-installed-p 'use-package)
+      (package-install 'use-package))
+
+  (unless (file-exists-p (concat
+  user-emacs-directory "/org-files"))
+      (make-directory (concat user-emacs-directory "/org-files") t))
+
+  (setq custom-file (concat user-emacs-directory "/custom.el"))
+#+END_SRC
+
+** Appearance
+A lot of these are just the way I expect an editor to act. The main
+difference here from my previous configuration is that I've switched
+from ~helm~ to ~ido~.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (load-theme 'tango-dark)
+  (setq org-todo-keywords '((sequence "TODO" "|" "DONE" "WAIT")))
+  (global-display-line-numbers-mode)
+
+  (setq column-number-mode t)
+  (defalias 'yes-or-no-p 'y-or-n-p)
+  (setq ring-bell-function 'ignore)
+  (defun dont-kill-emacs()
+    "Disable C-x C-c binding execute kill-emacs."
+    (interactive)
+    (error (substitute-command-keys "To exit emacs: \\[kill-emacs]")))
+  (global-set-key (kbd "C-x C-c") 'dont-kill-emacs)
+
+  (setq-default indent-tabs-mode nil)
+
+  (setq ido-enable-flex-matching t)
+  (setq ido-everywhere t)
+  (ido-mode 1)
+#+END_SRC
+
+* Dependencies
+In the past I've had emacs load a lot of packages. I've
+narrowed it down here to the ones which I actually use
+frequently. The big difference here is the use of
+~use-package~ both for cleanliness, and for auto-install of
+missing packages.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package recentf
+    :ensure t
+    :init
+    (setq recentf-max-saved-items 150)
+    (recentf-mode)
+    (global-set-key (kbd "C-x C-r") 'recentf-open-files))
+
+  (use-package multiple-cursors
+    :ensure t)
+
+  (use-package super-save
+    :ensure t
+    :config
+    (super-save-mode +1))
+
+  (use-package ace-window 
+    :ensure t
+    :init (setq aw-dispatch-always t)
+    (defvar aw-dispatch-alist
+    '((?d aw-delete-window "Delete Window")
+        (?D delete-other-windows "Delete Other Windows")
+        (?m aw-swap-window "Swap Windows")
+        (?M aw-move-window "Move Window")
+        (?c aw-copy-window "Copy Window")
+        (?j aw-switch-buffer-in-window "Select Buffer")
+        (?n aw-flip-window "Flip Window")
+        (?u aw-switch-buffer-other-window "Switch Buffer Other Window")
+        (?f aw-split-window-fair "Split Fair Window")
+        (?h aw-split-window-vert "Split Vertical")
+        (?v aw-split-window-horz "Split Horizontal")
+        (?? aw-show-dispatch-help))
+    "List of actions for `aw-dispatch-default'.")
+    :bind ("M-o" . ace-window))
+
+  (use-package which-key
+    :ensure t
+    :init (which-key-mode))
+
+  (use-package magit
+    :ensure t)
+
+  (use-package projectile
+    :ensure t
+    :init
+    (projectile-mode +1)
+    (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
+
+  (use-package evil
+    :ensure t
+    :init
+      (setq evil-want-C-i-jump nil)
+      (evil-mode)
+      (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
+      (define-key evil-normal-state-map (kbd "C-e") 'evil-end-of-line)
+      (evil-set-leader 'normal (kbd "SPC"))
+      (evil-define-key 'normal 'global (kbd "zd") 'mc/mark-next-like-this))
+
+  (use-package company
+    :ensure t
+    :init
+      (global-company-mode)
+      (setq company-global-modes '(not org-mode text-mode))
+      (setq company-idle-delay .1))
+
+  (use-package hydra
+    :ensure t
+    :init
+      (defhydra spacehydra-movement (
+          :hint nil
+          :columns 6
+          :exit t 
+          )
+          "Space-Hydra"
+          ("b" switch-to-buffer)
+          ("d" dired "Dired") 
+          ("ff" find-file)
+          ("hf" describe-function)
+          ("hi" info)
+          ("hk" describe-key)
+          ("hm" describe-mode)
+          ("hv" describe-variable)
+          ("s" save-buffer "Save")
+          ("t" (TODO-file-today) "TODO")
+          ("m" magit-status "Magit")
+          ("x" ido-mx)
+          ("o" ace-window "Window movement")
+          ("q" nil "Quit" :exit t)
+      )
+    :bind ("M-<SPC>" . spacehydra-movement/body))
+
+#+END_SRC
+
+* Lisp
+The only lisp I can't easily abandon is my TODO list
+method. I like ephemeral TODO lists where I can create a
+daily list and then forget about anything that wasn't done
+that day. This function does that.
+
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defun get-TODO-file-today ()
+    "Return filename for today's journal entry."
+    (let ((daily-name (format-time-string "%Y-%m-%d")))
+        (expand-file-name (concat "~/.emacs.d/org-files/" daily-name ".org"))))
+
+  (defun TODO-file-today ()
+    "Create and load a journal file based on today's date."
+    (interactive)
+
+    (if (equal (file-exists-p (get-TODO-file-today)) t)
+      (find-file (get-TODO-file-today))
+      (progn
+        (find-file (get-TODO-file-today))
+        (insert (concat "#+TITLE: TODO List for " (format-time-string "%A, %B %d")))
+        (newline)
+        (insert "#+DATE: ")
+        (calendar)
+        (find-file (get-TODO-file-today))
+        (org-date-from-calendar)
+        (save-buffer t)
+        (delete-other-windows))))
+
+  (defun ido-mx ()
+    (interactive)
+    (call-interactively
+    (intern
+      (ido-completing-read
+      "M-x "
+      (all-completions "" obarray 'commandp)))))
+
+  (global-set-key (kbd "M-x") 'ido-mx)
+#+END_SRC
