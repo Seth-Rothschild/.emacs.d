@@ -53,7 +53,6 @@ from ~helm~ to ~ido~.
     (interactive)
     (error (substitute-command-keys "To exit emacs: \\[kill-emacs]")))
   (global-set-key (kbd "C-x C-c") 'dont-kill-emacs)
-
   (setq-default indent-tabs-mode nil)
 
   (setq ido-enable-flex-matching t)
@@ -80,6 +79,9 @@ missing packages.
   (use-package multiple-cursors
     :ensure t)
 
+  (use-package pyvenv
+    :ensure t)
+
   (use-package super-save
     :ensure t
     :config
@@ -102,11 +104,15 @@ missing packages.
         (?v aw-split-window-horz "Split Horizontal")
         (?? aw-show-dispatch-help))
     "List of actions for `aw-dispatch-default'.")
-    :bind ("M-o" . ace-window))
+    :bind
+        ("C-x o" . ace-window)
+        ("M-o" . ace-window))
 
   (use-package which-key
     :ensure t
-    :init (which-key-mode))
+    :init
+      (setq which-key-idle-delay .2)
+      (which-key-mode))
 
   (use-package magit
     :ensure t)
@@ -122,10 +128,12 @@ missing packages.
     :init
       (setq evil-want-C-i-jump nil)
       (evil-mode)
-      (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
       (define-key evil-normal-state-map (kbd "C-e") 'evil-end-of-line)
-      (evil-set-leader 'normal (kbd "SPC"))
       (evil-define-key 'normal 'global (kbd "zd") 'mc/mark-next-like-this))
+      (with-eval-after-load 'evil-maps
+        (define-key evil-motion-state-map (kbd "SPC") nil)
+        (define-key evil-motion-state-map (kbd "RET") nil)
+        (define-key evil-motion-state-map (kbd "TAB") nil))
 
   (use-package company
     :ensure t
@@ -134,31 +142,6 @@ missing packages.
       (setq company-global-modes '(not org-mode text-mode))
       (setq company-idle-delay .1))
 
-  (use-package hydra
-    :ensure t
-    :init
-      (defhydra spacehydra-movement (
-          :hint nil
-          :columns 6
-          :exit t 
-          )
-          "Space-Hydra"
-          ("b" switch-to-buffer)
-          ("d" dired "Dired") 
-          ("ff" find-file)
-          ("hf" describe-function)
-          ("hi" info)
-          ("hk" describe-key)
-          ("hm" describe-mode)
-          ("hv" describe-variable)
-          ("s" save-buffer "Save")
-          ("t" (TODO-file-today) "TODO")
-          ("m" magit-status "Magit")
-          ("x" ido-mx)
-          ("o" ace-window "Window movement")
-          ("q" nil "Quit" :exit t)
-      )
-    :bind ("M-<SPC>" . spacehydra-movement/body))
 
 #+END_SRC
 
@@ -201,4 +184,12 @@ that day. This function does that.
       (all-completions "" obarray 'commandp)))))
 
   (global-set-key (kbd "M-x") 'ido-mx)
+
+  (defun split-window-thirds ()
+    (interactive)
+    (delete-other-windows)
+    (split-window-right)
+    (split-window-right)
+    (balance-windows)
+  )
 #+END_SRC
