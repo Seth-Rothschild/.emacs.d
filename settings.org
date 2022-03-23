@@ -162,43 +162,54 @@ that day. This function does that.
 
 
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (defun get-TODO-file-today ()
-    "Return filename for today's journal entry."
-    (let ((daily-name (format-time-string "%Y-%m-%d")))
-        (expand-file-name (concat "~/.emacs.d/org-files/" daily-name ".org"))))
+    (defun get-TODO-file-today ()
+      "Return filename for today's journal entry."
+      (let ((daily-name (format-time-string "%Y-%m-%d")))
+          (expand-file-name (concat "~/.emacs.d/org-files/" daily-name ".org"))))
 
-  (defun TODO-file-today ()
-    "Create and load a journal file based on today's date."
-    (interactive)
+    (defun TODO-file-today ()
+      "Create and load a journal file based on today's date."
+      (interactive)
 
-    (if (equal (file-exists-p (get-TODO-file-today)) t)
-      (find-file (get-TODO-file-today))
-      (progn
+      (if (equal (file-exists-p (get-TODO-file-today)) t)
         (find-file (get-TODO-file-today))
-        (insert (concat "#+TITLE: TODO List for " (format-time-string "%A, %B %d")))
-        (newline)
-        (insert "#+DATE: ")
-        (calendar)
-        (find-file (get-TODO-file-today))
-        (org-date-from-calendar)
-        (save-buffer t)
-        (delete-other-windows))))
+        (progn
+          (find-file (get-TODO-file-today))
+          (insert (concat "#+TITLE: TODO List for " (format-time-string "%A, %B %d")))
+          (newline)
+          (insert "#+DATE: ")
+          (calendar)
+          (find-file (get-TODO-file-today))
+          (org-date-from-calendar)
+          (save-buffer t)
+          (delete-other-windows))))
 
-  (defun ido-mx ()
-    (interactive)
-    (call-interactively
-    (intern
-      (ido-completing-read
-      "M-x "
-      (all-completions "" obarray 'commandp)))))
+    (defun ido-mx ()
+      (interactive)
+      (call-interactively
+      (intern
+        (ido-completing-read
+        "M-x "
+        (all-completions "" obarray 'commandp)))))
 
-  (global-set-key (kbd "M-x") 'ido-mx)
+    (global-set-key (kbd "M-x") 'ido-mx)
 
-  (defun split-window-thirds ()
-    (interactive)
-    (delete-other-windows)
-    (split-window-right)
-    (split-window-right)
-    (balance-windows)
-  )
+    (defun split-window-thirds ()
+        (interactive)
+        (delete-other-windows)
+        (split-window-right)
+        (split-window-right)
+        (balance-windows))
+
+    (defun work-mode ()
+        (interactive)
+        (split-window-thirds)
+        (magit)
+        (other-window 1)
+        (other-window 1)
+        (projectile-dired)
+        (split-window-below)
+        (other-window 1)
+        (eshell)
+        (other-window 1))
 #+END_SRC
