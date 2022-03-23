@@ -84,8 +84,12 @@ missing packages.
 
   (use-package super-save
     :ensure t
-    :config
-    (super-save-mode +1))
+    :init
+    (super-save-mode +1)
+    (setq super-save-auto-save-when-idle t)
+    (setq auto-save-default nil)
+    (add-to-list 'super-save-triggers 'ace-window)
+    (add-to-list 'super-save-hook-triggers 'find-file-hook))
 
   (use-package ace-window 
     :ensure t
@@ -116,6 +120,11 @@ missing packages.
 
   (use-package magit
     :ensure t)
+
+  (use-package markdown-mode
+    :ensure t
+    :mode ("README\\.md\\'" . gfm-mode)
+    :init (setq markdown-command "multimarkdown"))
 
   (use-package projectile
     :ensure t
