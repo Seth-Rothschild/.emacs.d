@@ -149,7 +149,7 @@ missing packages.
     :ensure t
     :init
       (global-company-mode)
-      (setq company-global-modes '(not org-mode text-mode))
+      (setq company-global-modes '(not org-mode text-mode shell-mode))
       (setq company-idle-delay .1))
 
 
