@@ -51,6 +51,7 @@ from ~helm~ to ~ido~.
   (defun dont-kill-emacs()
     "Disable C-x C-c binding execute kill-emacs."
     (interactive)
+    (if (not window-system) (kill-emacs))
     (error (substitute-command-keys "To exit emacs: \\[kill-emacs]")))
   (global-set-key (kbd "C-x C-c") 'dont-kill-emacs)
   (setq-default indent-tabs-mode nil)
