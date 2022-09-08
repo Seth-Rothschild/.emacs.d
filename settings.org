@@ -213,4 +213,9 @@ that day. This function does that.
         (other-window 1)
         (eshell)
         (other-window 1))
+        
+    (defun change-text-size (size)
+        (interactive "nSize: ")
+        (set-face-attribute 'default nil :height size))
+
 #+END_SRC
