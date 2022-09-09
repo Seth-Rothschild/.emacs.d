@@ -186,12 +186,14 @@ that day. This function does that.
           (delete-other-windows))))
 
     (defun ido-mx ()
-      (interactive)
-      (call-interactively
-      (intern
+        (interactive)
+        (call-interactively
+        (intern
         (ido-completing-read
         "M-x "
-        (all-completions "" obarray 'commandp)))))
+        (append extended-command-history (all-completions "" obarray 'commandp))
+        nil nil nil 'extended-command-history
+        (car extended-command-history)))))
 
     (global-set-key (kbd "M-x") 'ido-mx)
 
